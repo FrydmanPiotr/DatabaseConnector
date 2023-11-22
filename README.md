@@ -2,7 +2,7 @@
 
 ==Projekt w trakcie rozbudowy==
 
-Aplikacja z graficznym interfejsem umożlwiająca nawiązanie 
+Aplikacja z graficznym interfejsem umożliwiająca nawiązanie 
 połączenia z bazą danych MySQL.
 
 Program tworzy okno, w którym użytkownik wprowadza dane do
