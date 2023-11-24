@@ -27,15 +27,16 @@ class DatabaseConnector(tk.Tk):
         #wczytywanie elementów interfejsu użytkownika
         self.ipaddress = tk.Label(self, text="Adres IP")
         self.ipaddress.grid(row=0, column=0)
-        self.host = tk.Entry(self, bd=2)
+        self.host = tk.Entry(self, justify="right", bd=2)
         self.host.grid(row=0, column=1)
+        self.host.focus()
         self.username = tk.Label(self, text="Login")
         self.username.grid(row=1, column=0)
-        self.login = tk.Entry(self, bd=2)
+        self.login = tk.Entry(self, justify="right", bd=2)
         self.login.grid(row=1, column=1)
         self.password = tk.Label(self, text="Hasło")
         self.password.grid(row=2, column=0)
-        self.passwd = tk.Entry(self, bd=2)
+        self.passwd = tk.Entry(self, justify="right", bd=2)
         self.passwd.grid(row=2, column=1)
         
         self.connect = tk.Button(self, text="Połącz",
@@ -45,21 +46,47 @@ class DatabaseConnector(tk.Tk):
     def connect_to_database(self):
         try:
             #pobiera dane od użytkownika
-            connection = mysql.connect(
+            connect = mysql.connect(
                 host=self.host.get(),
                 user=self.login.get(),
                 password=self.passwd.get()
             )
-            if connection.is_connected():
-                messagebox.showinfo("Info","Połączono z bazą danych MySQL.")
-                connection.close()
+            if connect.is_connected():
+                self.display_databases(connect) 
             else:
                 messagebox.showerror("Błąd", "Nie udało połączyć się z bazą danych")
         except Error as e:
             messagebox.showerror("Błąd", f"Błąd: {e}")
+            
+    def display_databases(self, connect):
+        top = tk.Toplevel()
+        top.title("Bazy danych")
+        top.geometry("300x300+500+250")
+        top.focus()
+        
+        databases = []
+        #wyszukiwanie bazy danych
+        if connect.is_connected():
+            cursor = connect.cursor()
+            cursor.execute("SHOW DATABASES;")
+            databases = cursor.fetchall()
+    
+        if databases:
+            self.listbox = tk.Listbox(top)
+            for db in databases:
+                self.listbox.insert(tk.END, db[0])
+            self.listbox.grid(column=0, row=0)
+        else:
+            messagebox.showinfo("Błąd", "Brak baz danych.")
         finally:
-            #zamyka okno po próbie połączenia
-            self.destroy()
+            if 'cursor' in locals() and cursor:
+                cursor.close()
 
+        #zamknięcie połączenia z bazą danych
+        disconnect_btn = tk.Button(top, text="Rozłącz",
+                                   command=lambda: (connect.close(), top.destroy()), width=8)
+        disconnect_btn.grid(column=0, row=1)
+        top.mainloop()
+        
 db_connect = DatabaseConnector()
 db_connect.mainloop()
