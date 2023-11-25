@@ -12,3 +12,6 @@ otwiera nowe okno, w którym są wyświetlone nazwy wszystkich
 baz danych należących do użytkownika. Wciśnięcie przycisku
 "Rozłącz" powoduje przerwanie połączenia z serwerem i 
 zamknięcie okna z bazami danych.
+
+Po zerwaniu połączenia aplikacja wyświetla ponownie okno logowania
+z pustymi polami umożlwiając ponowne zalogowanie.
