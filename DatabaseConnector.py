@@ -89,14 +89,49 @@ class DatabaseConnector(tk.Tk):
             else:
                 messagebox.showinfo("Błąd", "Brak baz danych.")
         finally:
-            if 'cursor' in locals() and cursor:
+            if cursor:
                 cursor.close()
 
         #zamknięcie połączenia z bazą danych
+        open_btn = tk.Button(top, text="Otwórz", command=lambda: self.show_tables(connect))
+        open_btn.grid(column=0,row=1)
         disconnect_btn = tk.Button(top, text="Rozłącz", command=lambda: (connect.close(),
                                         top.destroy(), self.show_login_window()), width=8)
-        disconnect_btn.grid(column=0, row=1)
+        disconnect_btn.grid(column=1, row=1)
         top.mainloop()
+
+    def show_tables(self,connect):
+        for i in self.listbox.curselection():
+            select_db = self.listbox.get(i)
+        
+        db_tables = tk.Toplevel()
+        db_tables.title(f"{select_db}")
+        db_tables.geometry("300x300+500+250")
+        self.resizable(False, False)
+        db_tables.focus()
+
+        table_listbox = tk.Listbox(db_tables)
+        table_listbox.grid(row=0, column=0)
+
+        if connect.is_connected():
+            cursor = connect.cursor()
+            cursor.execute(f"USE {select_db}")
+            cursor.execute("SHOW TABLES;")
+            tables = cursor.fetchall()
+
+            #wyświetlanie tabeli w bazie danych
+            if tables:
+                for table in tables:
+                    table_listbox.insert(tk.END, table[0])
+            else:
+                messagebox.showinfo("Info", "Brak tabeli w tej bazie danych.")
+        else:
+            messagebox.showinfo("Błąd", "Wystąpił błąd podczas połączenia z bazą danych.")
+                
+        disconnect_btn = tk.Button(db_tables, text="Zamknij", command=db_tables.destroy, width=8)
+        disconnect_btn.grid(column=0, row=1)
+            
+        db_tables.mainloop()
         
 db_connect = DatabaseConnector()
 db_connect.mainloop()
