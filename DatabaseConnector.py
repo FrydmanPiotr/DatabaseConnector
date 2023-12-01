@@ -3,7 +3,7 @@ Aplikacja do połączenia z bazą danych MySQL
 Autor: Piotr Frydman
 """
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import messagebox,ttk
 import mysql.connector as mysql
 from mysql.connector import Error
 
@@ -40,10 +40,10 @@ class DatabaseConnector(tk.Tk):
         self.passwd.grid(row=2, column=1)
         
         self.connect = tk.Button(self, text="Połącz",
-                                 command=self.connect_to_database, width=10)
+                                 command=self.connect_to_server, width=10)
         self.connect.grid(row=2, column=2)
 
-    def connect_to_database(self):
+    def connect_to_server(self):
         try:
             #pobiera dane od użytkownika
             connect = mysql.connect(
@@ -82,30 +82,30 @@ class DatabaseConnector(tk.Tk):
                 databases = cursor.fetchall()
         
             if databases:
-                self.listbox = tk.Listbox(top)
+                db_listbox = tk.Listbox(top)
                 for db in databases:
-                    self.listbox.insert(tk.END, db[0])
-                self.listbox.grid(column=0, row=0)
+                    db_listbox.insert(tk.END, db[0])
+                db_listbox.grid(column=0, row=0)
             else:
                 messagebox.showinfo("Błąd", "Brak baz danych.")
         finally:
             if cursor:
                 cursor.close()
 
+        connect_btn = tk.Button(top, text="Połącz", command=lambda: self.show_tables(connect, db_listbox))
+        connect_btn.grid(column=0,row=1)
         #zamknięcie połączenia z bazą danych
-        open_btn = tk.Button(top, text="Otwórz", command=lambda: self.show_tables(connect))
-        open_btn.grid(column=0,row=1)
         disconnect_btn = tk.Button(top, text="Rozłącz", command=lambda: (connect.close(),
                                         top.destroy(), self.show_login_window()), width=8)
         disconnect_btn.grid(column=1, row=1)
         top.mainloop()
 
-    def show_tables(self,connect):
-        for i in self.listbox.curselection():
-            select_db = self.listbox.get(i)
-        
+    def show_tables(self, connect,db_listbox):
+        for i in db_listbox.curselection():
+            select_db = db_listbox.get(i)
+                    
         db_tables = tk.Toplevel()
-        db_tables.title(f"{select_db}")
+        db_tables.title(f"Baza danych: {select_db}")
         db_tables.geometry("300x300+500+250")
         self.resizable(False, False)
         db_tables.focus()
@@ -119,7 +119,7 @@ class DatabaseConnector(tk.Tk):
             cursor.execute("SHOW TABLES;")
             tables = cursor.fetchall()
 
-            #wyświetlanie tabeli w bazie danych
+            # wyświetlanie tabeli w bazie danych
             if tables:
                 for table in tables:
                     table_listbox.insert(tk.END, table[0])
@@ -127,11 +127,62 @@ class DatabaseConnector(tk.Tk):
                 messagebox.showinfo("Info", "Brak tabeli w tej bazie danych.")
         else:
             messagebox.showinfo("Błąd", "Wystąpił błąd podczas połączenia z bazą danych.")
-                
+
+        open_btn = tk.Button(db_tables, text="Otwórz", command=lambda:
+                             self.read_table(connect, select_db, table_listbox), width=8)
+        open_btn.grid(column=0, row=1)
+
         disconnect_btn = tk.Button(db_tables, text="Zamknij", command=db_tables.destroy, width=8)
-        disconnect_btn.grid(column=0, row=1)
-            
+        disconnect_btn.grid(column=1, row=1)
+
         db_tables.mainloop()
+
+    def read_table(self, connect,select_db, table_listbox):
+        for i in table_listbox.curselection():
+            select_tab = table_listbox.get(i)
+            
+        selected_table = tk.Toplevel()
+        selected_table.geometry("600x250+500+250")
+        selected_table.title(f"Tabela: {select_tab}")
+        selected_table.resizable(False, False)
+        selected_table.focus()
+
+        tree = ttk.Treeview(selected_table)
+        columns = []  # List to store column names
+
+        try:
+            if connect.is_connected():
+                cursor = connect.cursor()
+                cursor.execute(f"SELECT * FROM {select_tab}")
+
+                #pobiera nazwy kolumn
+                columns = [i[0] for i in cursor.description]
+                
+                tree["show"] = "headings"
+                tree["columns"] = tuple(columns)
+                for col_name in columns:
+                    tree.heading(col_name, text=col_name)
+
+                records = cursor.fetchall()
+
+                #wyświetla tabelę w oknie
+                for record in records:
+                    tree.insert("", tk.END, values=record)
+                cursor.close()
+            else:
+                messagebox.showinfo("Info", "Wystąpił błąd podczas pobierania danych.")
+        except Exception as e:
+            messagebox.showinfo("Error", f"Błąd {e}")
+
+        tree.grid(row=0, column=0, sticky="nsew")
+
+        # Scrollbars
+        vsb = ttk.Scrollbar(selected_table, orient="vertical", command=tree.yview)
+        vsb.grid(row=0, column=1, sticky="ns")
+        tree.configure(yscrollcommand=vsb.set)
+
+        selected_table.mainloop()
+
         
 db_connect = DatabaseConnector()
 db_connect.mainloop()
