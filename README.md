@@ -16,8 +16,11 @@ zamknięcie okna z bazami danych.
 Użytkownik ma możliwość wybrania bazy danych z listy i nawiązania
 z nią połączenia przez wciśnięcie przycisku "Otwórz". Po wykonaniu
 tej akcji nazwa okna zmienia się na nazwę wybranej bazy danych i 
-zostaje wyświetlona list tabeli, które są w niej zawarte. Zerwanie
+zostaje wyświetlona list tabeli, które są w niej zawarte. Zakończenie
 połączenia z bazą danych następuje po wciśnięciu przycisku "Zamknij".
 
-Po zerwaniu połączenia aplikacja wyświetla ponownie okno logowania
+Użytkownik może wybrać tabelę z listy i wyświetlić jej zawartość przy
+pomocy przycisku "Otwórz".
+
+Po zamknięciu połączenia aplikacja wyświetla ponownie okno logowania
 z pustymi polami umożlwiając ponowne zalogowanie.
