@@ -22,5 +22,10 @@ połączenia z bazą danych następuje po wciśnięciu przycisku "Zamknij".
 Użytkownik może wybrać tabelę z listy i wyświetlić jej zawartość przy
 pomocy przycisku "Otwórz".
 
+Zawartość tabeli zostaje wyświetlona w nowym oknie. Widok jest 
+podzielony na kolumny zwieńczone nazwami, a poniżej jest ich 
+zawartość. Suwak z prawej strony umożlwia przewijanie w przypadku
+większej ilości rekordów.
+
 Po zamknięciu połączenia aplikacja wyświetla ponownie okno logowania
 z pustymi polami umożlwiając ponowne zalogowanie.
