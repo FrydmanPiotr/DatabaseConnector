@@ -42,7 +42,7 @@ class DatabaseConnector(tk.Tk):
         self.conn_btn = tk.Button(self, text="Połącz",
                                  command=self.connect_to_server, width=10)
         self.conn_btn.grid(row=2, column=2)
-
+            
     def connect_to_server(self):
         try:
             #pobiera dane od użytkownika
@@ -65,6 +65,18 @@ class DatabaseConnector(tk.Tk):
         self.host.delete(0, tk.END) #usuwa dane logowania
         self.login.delete(0, tk.END)
         self.passwd.delete(0, tk.END)
+
+    #wykonywanie operacji na bazach danych
+    def db_operations(self, operation):
+        records = []
+        if self.connect.is_connected():
+            cursor = self.connect.cursor()
+            cursor.execute(operation)
+            records = cursor.fetchall()
+            if records is not None:
+                return records
+        else:
+            messagebox.showinfo("Info", "Nie połączono z serwerem")
         
     def display_databases(self):
         top = tk.Toplevel()
@@ -72,26 +84,11 @@ class DatabaseConnector(tk.Tk):
         top.geometry("300x300+500+250")
         top.resizable(False, False)
         top.focus()
-        
-        databases = []
-        try:
-            #wyszukiwanie bazy danych
-            if self.connect.is_connected():
-                cursor = self.connect.cursor()
-                cursor.execute("SHOW DATABASES;")
-                databases = cursor.fetchall()
-        
-                db_list = tk.Listbox(top)
-                for db in databases:
-                    db_list.insert(tk.END, db[0])
-                db_list.grid(column=0, row=0)
-                
-            else:
-                messagebox.showinfo("Info", "Nie połączono z serwerem")
-
-        finally:
-            if cursor:
-                cursor.close()
+    
+        db_list = tk.Listbox(top)
+        for db in self.db_operations("SHOW DATABASES"):
+            db_list.insert(tk.END, db[0])
+        db_list.grid(column=0, row=0)        
 
         connect_btn = tk.Button(top, text="Połącz", command=lambda: self.show_tables(db_list))
         connect_btn.grid(column=0,row=1)
@@ -114,31 +111,18 @@ class DatabaseConnector(tk.Tk):
         table_list = tk.Listbox(db_tables)
         table_list.grid(row=0, column=0)
 
-        if self.connect.is_connected():
-            cursor = self.connect.cursor()
-            cursor.execute(f"USE {select_db}")
-            cursor.execute("SHOW TABLES;")
-            tables = cursor.fetchall()
+        self.db_operations(f"USE {select_db}")
 
-            # wyświetlanie tabeli w bazie danych
-            if tables:
-                for table in tables:
-                    table_list.insert(tk.END, table[0])
-            else:
-                messagebox.showinfo("Info", "Brak tabeli w bazie danych.")
-        else:
-            messagebox.showerror("Błąd", "Wystąpił błąd podczas połączenia z bazą danych.")
-
+        # wyświetlanie tabeli w bazie danych
+        for table in self.db_operations("SHOW TABLES;"):
+            table_list.insert(tk.END, table[0])
+       
         open_btn = tk.Button(db_tables, text="Otwórz", command=lambda:
                              self.read_table(table_list), width=8)
         open_btn.grid(column=0, row=1)
 
         disconnect_btn = tk.Button(db_tables, text="Zamknij", command=db_tables.destroy, width=8)
         disconnect_btn.grid(column=1, row=1)
-
-        if cursor:
-            cursor.close()
-
         db_tables.mainloop()
 
     def read_table(self, table_list):
