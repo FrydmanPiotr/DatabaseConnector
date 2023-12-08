@@ -13,35 +13,27 @@ class DatabaseConnector(tk.Tk):
         self.title("Połączenie z serwerem MySQL")
         self.geometry("350x120+500+250")
         self.resizable(False, False)
-        
-        #położenie elementów w oknie
-        self.columnconfigure(0, weight=3)
-        self.columnconfigure(1, weight=1)
-        self.columnconfigure(2, weight=2)
-        self.rowconfigure(0, weight=1)
-        self.rowconfigure(1, weight=2)
-        self.rowconfigure(2, weight=2)
         self.create_widgets()
 
     def create_widgets(self):        
         #wczytywanie elementów interfejsu użytkownika
         self.ipaddress = tk.Label(self, text="Adres IP")
         self.ipaddress.grid(row=0, column=0)
-        self.host = tk.Entry(self, justify="right", bd=2)
+        self.host = tk.Entry(self, justify="right",width=30, bd=2)
         self.host.grid(row=0, column=1)
         self.host.focus()
         self.username = tk.Label(self, text="Login")
         self.username.grid(row=1, column=0)
-        self.login = tk.Entry(self, justify="right", bd=2)
+        self.login = tk.Entry(self, justify="right", width=30, bd=2)
         self.login.grid(row=1, column=1)
         self.password = tk.Label(self, text="Hasło")
         self.password.grid(row=2, column=0)
-        self.passwd = tk.Entry(self, show="*",justify="right", bd=2)
+        self.passwd = tk.Entry(self, show="*",justify="right",width=30, bd=2)
         self.passwd.grid(row=2, column=1)
         
         self.conn_btn = tk.Button(self, text="Połącz",
                                  command=self.connect_to_server, width=10)
-        self.conn_btn.grid(row=2, column=2)
+        self.conn_btn.place(x=150, y=63)
             
     def connect_to_server(self):
         try:
@@ -55,12 +47,13 @@ class DatabaseConnector(tk.Tk):
                 self.withdraw() #ukrywa okno logowania
                 self.display_databases()
             else:
-                messagebox.showerror("Błąd", "Nie udało połączyć się z bazą danych")
+                messagebox.showerror("Błąd", "Nie udało połączyć się z"\
+                                     "bazą danych")
                 
         except mysql.Error as e:
             messagebox.showerror("Błąd", f"Błąd: {e}")
 
-    def show_login_window(self):
+    def show_login_win(self):
         self.deiconify()  #wyświetla okno logowania
         self.host.delete(0, tk.END) #usuwa dane logowania
         self.login.delete(0, tk.END)
@@ -73,112 +66,107 @@ class DatabaseConnector(tk.Tk):
             cursor = self.connect.cursor()
             cursor.execute(operation)
             records = cursor.fetchall()
+            if "SELECT" in operation:
+                table ={'columns':[i[0] for i in cursor.description],
+                        'records':records}
+                return table
             if records is not None:
                 return records
+            cursor.close()
         else:
             messagebox.showinfo("Info", "Nie połączono z serwerem")
         
     def display_databases(self):
-        top = tk.Toplevel()
-        top.title("Bazy danych")
-        top.geometry("300x300+500+250")
-        top.resizable(False, False)
-        top.focus()
+        db = tk.Toplevel()
+        db.title("Bazy danych")
+        db.geometry("260x200+500+250")
+        db.resizable(False, False)
+        db.focus()
     
-        db_list = tk.Listbox(top)
-        for db in self.db_operations("SHOW DATABASES"):
-            db_list.insert(tk.END, db[0])
+        db_list = tk.Listbox(db, width=40)
+        for databases in self.db_operations("SHOW DATABASES"):
+            db_list.insert(tk.END, databases[0])
         db_list.grid(column=0, row=0)        
 
-        connect_btn = tk.Button(top, text="Połącz", command=lambda: self.show_tables(db_list))
-        connect_btn.grid(column=0,row=1)
+        connect_btn = tk.Button(db, text="Połącz",
+                                command=lambda:self.show_tables(db_list))
+        connect_btn.place(x=3, y=170)
         #zamknięcie połączenia z bazą danych
-        disconnect_btn = tk.Button(top, text="Rozłącz", command=lambda: (connect.close(),
-                                        top.destroy(), self.show_login_window()), width=8)
-        disconnect_btn.grid(column=1, row=1)
-        top.mainloop()
+        disconnect_btn = tk.Button(db, text="Rozłącz", command=lambda:
+            (self.connect.close(),db.destroy(),self.show_login_win()), width=8)
+        disconnect_btn.place(x=50,y=170)
+        db.mainloop()
 
     def show_tables(self, db_list):
-        for i in db_list.curselection():
-            select_db = db_list.get(i)
-                    
-        db_tables = tk.Toplevel()
-        db_tables.title(f"Baza danych: {select_db}")
-        db_tables.geometry("300x300+540+220")
-        db_tables.resizable(False, False)
-        db_tables.focus()
+        try:
+            db_tables = tk.Toplevel()
+            db_tables.geometry("260x200+540+220")
+            db_tables.resizable(False, False)
+            db_tables.focus()
+        
+            for i in db_list.curselection():
+                select_db = db_list.get(i)
+            db_tables.title(f"Baza danych: {select_db}")
 
-        table_list = tk.Listbox(db_tables)
-        table_list.grid(row=0, column=0)
+            table_list = tk.Listbox(db_tables, width=40)
+            table_list.grid(row=0, column=0)
 
-        self.db_operations(f"USE {select_db}")
+            self.db_operations(f"USE {select_db}")
+            # wyświetlanie tabeli w bazie danych
+            for table in self.db_operations("SHOW TABLES;"):
+                table_list.insert(tk.END, table[0])
+           
+            open_btn = tk.Button(db_tables, text="Otwórz", command=lambda:
+                                 self.read_table(table_list), width=8)
+            open_btn.place(x=3, y=170)
 
-        # wyświetlanie tabeli w bazie danych
-        for table in self.db_operations("SHOW TABLES;"):
-            table_list.insert(tk.END, table[0])
-       
-        open_btn = tk.Button(db_tables, text="Otwórz", command=lambda:
-                             self.read_table(table_list), width=8)
-        open_btn.grid(column=0, row=1)
+            disconnect_btn = tk.Button(db_tables, text="Zamknij",
+                                       command=db_tables.destroy, width=8)
+            disconnect_btn.place(x=63,y=170)
+            db_tables.mainloop()
 
-        disconnect_btn = tk.Button(db_tables, text="Zamknij", command=db_tables.destroy, width=8)
-        disconnect_btn.grid(column=1, row=1)
-        db_tables.mainloop()
+        except UnboundLocalError:
+            db_tables.destroy()
+            messagebox.showinfo("Info", "Proszę wybrać bazę danych")
 
     def read_table(self, table_list):
-        for i in table_list.curselection():
-            select_tab = table_list.get(i)
-            
-        selected_table = tk.Toplevel()
-        selected_table.geometry("280x250+500+250")
-        selected_table.title(f"Tabela: {select_tab}")
-        selected_table.resizable(False, False)
-        selected_table.focus()
-
-        tree = ttk.Treeview(selected_table)
-        columns = []
-
         try:
-            if self.connect.is_connected():
-                cursor = self.connect.cursor()
-                cursor.execute(f"SELECT * FROM {select_tab}")
+            selected_table = tk.Toplevel()
+            selected_table.geometry("280x250+500+250")
+            selected_table.resizable(False, False)
+            selected_table.focus()
+            
+            for i in table_list.curselection():
+                select_tab = table_list.get(i)
+            selected_table.title(f"Tabela: {select_tab}")
 
-                #pobiera nazwy kolumn
-                columns = [i[0] for i in cursor.description]
-                tree["show"] = "headings"
-                tree["columns"] = tuple(columns)
-                for col_name in columns:
-                    tree.heading(col_name, text=col_name)
-
-                records = cursor.fetchall()
-
-                #wyświetla tabelę w oknie
-                for record in records:
-                    tree.insert("", tk.END, values=record)
-                cursor.close()
-                column_width = 100
-                for column in tree["columns"]:
-                    tree.column(column,width=column_width)
-                    tree.heading(column,anchor="w")
-                tree.column("id",width=20)
-                tree.grid(row=0, column=0, sticky="nsew")
-                
-            else:
-                messagebox.showinfo("Info", "Wystąpił błąd podczas pobierania danych.")
-        except mysql.Error as e:
-            messagebox.showinfo("Error", f"Błąd {e}")
-
-        finally:
-            if cursor:
-                cursor.close()
-                
-        # Scrollbars
-        vsb = ttk.Scrollbar(selected_table, orient="vertical", command=tree.yview)
-        vsb.grid(row=0, column=1, sticky="ns")
-        tree.configure(yscrollcommand=vsb.set)
-
-        selected_table.mainloop()
-
-        
+            tree = ttk.Treeview(selected_table)
+            tab = self.db_operations(f"SELECT * FROM {select_tab}")
+            #pobiera nazwy kolumn
+            tree["show"] = "headings"
+            tree["columns"] = tuple(tab['columns'])
+            for col_name in tab['columns']:
+                tree.heading(col_name, text=col_name)
+       
+            #wyświetla zawartość tabeli
+            for record in tab['records']:
+                tree.insert("", tk.END, values=record)
+            for column in tree["columns"]:
+                tree.column(column,width=100)
+                tree.heading(column,anchor="w")
+            tree.column("id",width=20)
+            tree.grid(row=0, column=0, sticky="nsew")
+                               
+            # Scrollbars
+            vsb = ttk.Scrollbar(selected_table, orient="vertical",
+                                command=tree.yview)
+            vsb.grid(row=0, column=1, sticky="ns")
+            tree.configure(yscrollcommand=vsb.set)
+            selected_table.mainloop()
+            
+        except UnboundLocalError:
+            selected_table.destroy()
+            messagebox.showinfo("Info", "Proszę wybrać tabelę")
+            
 db_connect = DatabaseConnector()
 db_connect.mainloop()
