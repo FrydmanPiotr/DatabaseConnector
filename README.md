@@ -1,7 +1,5 @@
 # DatabaseConnector
 
-==Projekt w trakcie rozbudowy==
-
 Aplikacja z graficznym interfejsem umożliwiająca nawiązanie 
 połączenia z serwerem baz danych MySQL.
 
