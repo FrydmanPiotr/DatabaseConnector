@@ -15,9 +15,12 @@ zamknięcie okna z bazami danych.
 
 Użytkownik ma możliwość wybrania bazy danych z listy i nawiązania
 z nią połączenia przez wciśnięcie przycisku "Otwórz". Po wykonaniu
-tej akcji nazwa okna zmienia się na nazwę wybranej bazy danych i 
-zostaje wyświetlona list tabeli, które są w niej zawarte. Zakończenie
-połączenia z bazą danych następuje po wciśnięciu przycisku "Zamknij".
+tej akcji zostaje utworzone nowe okno z nazwą wybranej bazy danych i 
+zostaje wyświetlona w nim lista tabeli, które są w niej zawarte. 
+Zakończenie połączenia z bazą danych następuje po wciśnięciu przycisku
+"Zamknij". Przycisk "Utwórz" otwiera nowe okno w którym należy podać
+nazwę dla nowo tworzonej bazy danych. Przycisk "Utwórz" zatwierdza operację,
+a przycisk "Zamknij" anuluje.
 
 Użytkownik może wybrać tabelę z listy i wyświetlić jej zawartość przy
 pomocy przycisku "Otwórz".
