@@ -14,7 +14,53 @@ class DatabaseConnector(tk.Tk):
         self.geometry("350x120+500+250")
         self.resizable(False, False)
         self.create_widgets()
+    
+    def db_operations(self, operation):
+        #wykonywanie operacji na bazach danych
+        records = []
+        if self.connect.is_connected():
+            cursor = self.connect.cursor()
+            cursor.execute(operation)
+            
+            if "SELECT" in operation:
+                table ={'columns':[i[0] for i in cursor.description],
+                        'records':records}
+                return table
+            else:
+                records = cursor.fetchall()
+                cursor.close()
+                return records
+        else:
+            messagebox.showinfo("Info", "Nie połączono z serwerem")
 
+    def create_database(self):
+        #tworzenie nowej bazy danych
+        db_create = tk.Toplevel()
+        db_create.title("Utwórz bazę danych")
+        db_create.geometry("280x70+600+200")
+        db_create.resizable(False, False)
+        db_create.focus()
+        self.name = tk.Label(db_create, text="Nazwa")
+        self.name.grid(row=1, column=0)
+        self.db_name = tk.Entry(db_create, justify="right", width=30, bd=2)
+        self.db_name.grid(row=1, column=1)
+                
+        def add_database():
+            query = f"CREATE DATABASE {self.db_name.get()}"
+            try:
+                self.db_operations(query)
+            except:
+                messagebox.showinfo("Info", "Proszę wpisać nazwę bazy danych")
+                db_create.focus()
+
+        self.create_btn = tk.Button(db_create, text="Utwórz", command=add_database,
+                                    width=10)
+        self.create_btn.place(x=45,y=25)
+        self.close = tk.Button(db_create, text="Zamknij", command=db_create.destroy, width=10)
+        self.close.place(x=130,y=25)
+        
+        db_create.mainloop()
+    
     def create_widgets(self):        
         #wczytywanie elementów interfejsu użytkownika
         self.ipaddress = tk.Label(self, text="Adres IP")
@@ -58,23 +104,6 @@ class DatabaseConnector(tk.Tk):
         self.host.delete(0, tk.END) #usuwa dane logowania
         self.login.delete(0, tk.END)
         self.passwd.delete(0, tk.END)
-
-    #wykonywanie operacji na bazach danych
-    def db_operations(self, operation):
-        records = []
-        if self.connect.is_connected():
-            cursor = self.connect.cursor()
-            cursor.execute(operation)
-            records = cursor.fetchall()
-            if "SELECT" in operation:
-                table ={'columns':[i[0] for i in cursor.description],
-                        'records':records}
-                return table
-            if records is not None:
-                return records
-            cursor.close()
-        else:
-            messagebox.showinfo("Info", "Nie połączono z serwerem")
         
     def display_databases(self):
         db = tk.Toplevel()
@@ -92,10 +121,13 @@ class DatabaseConnector(tk.Tk):
                                 command=lambda:self.show_tables(db_list))
         connect_btn.place(x=3, y=170)
         #zamknięcie połączenia z bazą danych
-        disconnect_btn = tk.Button(db, text="Rozłącz", command=lambda:
-            (self.connect.close(),db.destroy(),self.show_login_win()), width=8)
+        disconnect_btn = tk.Button(db, text="Rozłącz", command=lambda: (self.connect.close(),
+                                        db.destroy(), self.show_login_win()))
         disconnect_btn.place(x=50,y=170)
-        db.mainloop()
+        #utworzenie nowej bazy danych
+        new_base = tk.Button(db, text="Utwórz",
+                             command=self.create_database, width=8)
+        new_base.place(x=100,y=170)
 
     def show_tables(self, db_list):
         try:
